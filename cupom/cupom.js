@@ -158,3 +158,49 @@ window.onload = function() {
   carregarResumo();
 };
 
+
+// Funções de autenticação
+function verificarUsuarioLogado() {
+  const currentUser = localStorage.getItem('currentUser');
+  const userInfoDiv = document.getElementById('user-info');
+  const loginPromptDiv = document.getElementById('login-prompt');
+  const userNameSpan = document.getElementById('user-name');
+
+  if (currentUser) {
+    const user = JSON.parse(currentUser);
+    userNameSpan.textContent = user.username;
+    userInfoDiv.style.display = 'block';
+    loginPromptDiv.style.display = 'none';
+    return true;
+  } else {
+    userInfoDiv.style.display = 'none';
+    loginPromptDiv.style.display = 'block';
+    return false;
+  }
+}
+
+function verificarLoginEProsseguir() {
+  if (verificarUsuarioLogado()) {
+    irParaPagamento();
+  } else {
+    alert('Você precisa fazer login antes de finalizar o pedido.');
+    // Opcional: redirecionar automaticamente para login
+    // irParaLogin();
+  }
+}
+
+function irParaLogin() {
+  window.location.href = '../login/login.html';
+}
+
+function logout() {
+  localStorage.removeItem('currentUser');
+  verificarUsuarioLogado();
+  alert('Logout realizado com sucesso!');
+}
+
+// Verificar status do usuário quando a página carrega
+window.addEventListener('load', function() {
+  verificarUsuarioLogado();
+});
+

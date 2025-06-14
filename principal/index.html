@@ -10,7 +10,13 @@
 
   <header>
     <h1>Padaria Pink Delfins</h1>
-    <a href="../login/login.html" class="login-button">Login</a>
+    <div class="header-actions">
+      <div id="user-info" style="display: none;">
+        <span id="user-name"></span>
+        <button id="logout-btn" onclick="logout()">Sair</button>
+      </div>
+      <a href="../login/login.html" id="login-link" class="login-button">Login</a>
+    </div>
   </header>
 
   <div id="painel-adm" style="display: none;">

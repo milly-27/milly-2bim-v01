@@ -413,3 +413,79 @@ function filtrarTabela(inputId, tabelaId) {
   });
 }
 
+
+// Função para upload de imagem
+async function uploadImagem() {
+  const fileInput = document.getElementById('upload-imagem-produto');
+  const urlInput = document.getElementById('imagem-produto');
+  
+  if (!fileInput.files[0]) {
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('image', fileInput.files[0]);
+
+  try {
+    // Mostrar loading
+    urlInput.value = 'Enviando imagem...';
+    
+    const response = await fetch('/upload-image', {
+      method: 'POST',
+      body: formData
+    });
+
+    const data = await response.json();
+    
+    if (data.success) {
+      urlInput.value = data.imageUrl;
+      alert('Imagem enviada com sucesso!');
+    } else {
+      alert('Erro ao enviar imagem: ' + data.message);
+      urlInput.value = '';
+    }
+  } catch (error) {
+    console.error('Erro no upload:', error);
+    alert('Erro ao enviar imagem. Tente novamente.');
+    urlInput.value = '';
+  }
+}
+
+
+// Funções de autenticação
+function verificarUsuarioLogado() {
+  const currentUser = localStorage.getItem('currentUser');
+  const userInfoDiv = document.getElementById('user-info');
+  const userNameSpan = document.getElementById('user-name');
+
+  if (currentUser) {
+    const user = JSON.parse(currentUser);
+    userNameSpan.textContent = user.username;
+    userInfoDiv.style.display = 'block';
+    
+    // Verificar se o usuário é gerente
+    if (user.tipo !== 'gerente') {
+      alert('Acesso negado! Apenas gerentes podem acessar esta página.');
+      window.location.href = '../principal/index.html';
+      return null;
+    }
+    
+    return user;
+  } else {
+    alert('Você precisa fazer login como gerente para acessar esta página.');
+    window.location.href = '../login/login.html';
+    return null;
+  }
+}
+
+function logout() {
+  localStorage.removeItem('currentUser');
+  alert('Logout realizado com sucesso!');
+  window.location.href = '../login/login.html';
+}
+
+// Verificar status do usuário quando a página carrega
+window.addEventListener('DOMContentLoaded', function() {
+  verificarUsuarioLogado();
+});
+

@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
+const multer = require('multer');
+const path = require('path');
 
 const app = express();
 const PORT = 3000;
@@ -13,6 +15,41 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('.'));
 
+// Servir arquivos de imagem estaticamente
+app.use('/imagens', express.static('../imagens'));
+
+// Configuração do multer para upload de imagens
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    // Criar diretório se não existir
+    const dir = '../imagens';
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    cb(null, dir);
+  },
+  filename: function (req, file, cb) {
+    // Gerar nome único para o arquivo
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  fileFilter: function (req, file, cb) {
+    // Aceitar apenas imagens
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Apenas arquivos de imagem são permitidos!'), false);
+    }
+  },
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB
+  }
+});
+
 let products = [];
 let cupons = [];
 let users = [];
@@ -24,9 +61,38 @@ function loadDataFromCSV() {
         const lines = data.split('\n').filter(l => l.trim() !== '');
         if (lines.length > 1) {
             products = lines.slice(1).map(line => {
-                const [name, price, image, category] = line.split(',').map(x => x?.trim());
+                // Função para dividir CSV respeitando aspas
+                const parseCSVLine = (line) => {
+                    const result = [];
+                    let current = '';
+                    let inQuotes = false;
+                    
+                    for (let i = 0; i < line.length; i++) {
+                        const char = line[i];
+                        
+                        if (char === '"' && (i === 0 || line[i-1] === ',')) {
+                            inQuotes = true;
+                        } else if (char === '"' && inQuotes && (i === line.length - 1 || line[i+1] === ',')) {
+                            inQuotes = false;
+                        } else if (char === ',' && !inQuotes) {
+                            result.push(current.trim());
+                            current = '';
+                            continue;
+                        } else {
+                            current += char;
+                        }
+                    }
+                    result.push(current.trim());
+                    return result;
+                };
+
+                const fields = parseCSVLine(line);
+                const [name, price, image, category] = fields;
+                
+                console.log('Carregando produto:', { name, price, image, category }); // Debug
+                
                 return { 
-                    name, 
+                    name: name || '', 
                     price: parseFloat(price) || 0, 
                     image: image || '', 
                     category: category || '' 
@@ -60,7 +126,33 @@ function loadDataFromCSV() {
         const lines = data.split('\n').filter(l => l.trim() !== '');
         if (lines.length > 1) {
             users = lines.slice(1).map(line => {
-                const [username, email, password, tipo] = line.split(',').map(x => x?.trim());
+                const parseCSVLine = (line) => {
+                    const result = [];
+                    let current = '';
+                    let inQuotes = false;
+                    
+                    for (let i = 0; i < line.length; i++) {
+                        const char = line[i];
+                        
+                        if (char === '"' && (i === 0 || line[i-1] === ',')) {
+                            inQuotes = true;
+                        } else if (char === '"' && inQuotes && (i === line.length - 1 || line[i+1] === ',')) {
+                            inQuotes = false;
+                        } else if (char === ',' && !inQuotes) {
+                            result.push(current.trim());
+                            current = '';
+                            continue;
+                        } else {
+                            current += char;
+                        }
+                    }
+                    result.push(current.trim());
+                    return result;
+                };
+
+                const fields = parseCSVLine(line);
+                const [username, email, password, tipo] = fields;
+                
                 return { 
                     username, 
                     email, 
@@ -79,7 +171,24 @@ function saveDataToCSV() {
         // Produtos
         let productsCSV = 'name,price,image,category\n';
         products.forEach(p => {
-            productsCSV += `${p.name},${p.price},${p.image || ''},${p.category || ''}\n`;
+            // Escapar vírgulas e aspas nos campos de texto
+            const escapeField = (field) => {
+                if (!field) return '';
+                const str = String(field);
+                if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                    return `"${str.replace(/"/g, '""')}"`;
+                }
+                return str;
+            };
+
+            const name = escapeField(p.name);
+            const price = p.price || 0;
+            const image = escapeField(p.image);
+            const category = escapeField(p.category);
+            
+            productsCSV += `${name},${price},${image},${category}\n`;
+            
+            console.log('Salvando produto:', { name, price, image, category }); // Debug
         });
         fs.writeFileSync(PRODUCTS_FILE, productsCSV);
 
@@ -93,10 +202,25 @@ function saveDataToCSV() {
         // Usuários
         let usersCSV = 'username,email,password,tipo\n';
         users.forEach(u => {
-            usersCSV += `${u.username},${u.email},${u.password},${u.tipo || 'cliente'}\n`;
+            const escapeField = (field) => {
+                if (!field) return '';
+                const str = String(field);
+                if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                    return `"${str.replace(/"/g, '""')}"`;
+                }
+                return str;
+            };
+
+            const username = escapeField(u.username);
+            const email = u.email;
+            const password = u.password;
+            const tipo = u.tipo || 'cliente';
+            
+            usersCSV += `${username},${email},${password},${tipo}\n`;
         });
         fs.writeFileSync(USERS_FILE, usersCSV);
 
+        console.log('Dados salvos com sucesso!');
     } catch (error) {
         console.error('Erro ao salvar dados:', error);
     }
@@ -104,8 +228,33 @@ function saveDataToCSV() {
 
 loadDataFromCSV();
 
+// Rota para upload de imagens
+app.post('/upload-image', upload.single('image'), (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'Nenhum arquivo foi enviado' });
+        }
+
+        // Retornar URL completa que funcionará tanto localmente quanto em produção
+        const imageUrl = `http://localhost:${PORT}/imagens/${req.file.filename}`;
+        
+        console.log('Imagem salva:', req.file.filename);
+        console.log('URL da imagem:', imageUrl);
+        
+        res.json({ 
+            success: true, 
+            imageUrl: imageUrl,
+            message: 'Imagem enviada com sucesso'
+        });
+    } catch (error) {
+        console.error('Erro no upload:', error);
+        res.status(500).json({ success: false, message: 'Erro interno do servidor' });
+    }
+});
+
 // --- Produtos ---
 app.get('/produtos', (req, res) => {
+    console.log('Enviando produtos:', products); // Debug
     res.json(products);
 });
 
@@ -125,13 +274,16 @@ app.post('/produtos', (req, res) => {
         image: image || '', 
         category: category || '' 
     };
+    
     products.push(newProduct);
     saveDataToCSV();
+    
+    console.log('Produto adicionado:', newProduct);
     res.status(201).json(newProduct);
 });
 
 app.put('/produtos/:name', (req, res) => {
-    const nameParam = req.params.name;
+    const nameParam = decodeURIComponent(req.params.name);
     const { name, price, image, category } = req.body;
     const index = products.findIndex(p => p.name === nameParam);
     
@@ -145,11 +297,12 @@ app.put('/produtos/:name', (req, res) => {
     };
 
     saveDataToCSV();
+    console.log('Produto atualizado:', products[index]);
     res.json(products[index]);
 });
 
 app.delete('/produtos/:name', (req, res) => {
-    const nameParam = req.params.name;
+    const nameParam = decodeURIComponent(req.params.name);
     const index = products.findIndex(p => p.name === nameParam);
     
     if (index === -1) return res.status(404).json({ message: 'Produto não encontrado' });
@@ -181,7 +334,7 @@ app.post('/cupons', (req, res) => {
 });
 
 app.put('/cupons/:code', (req, res) => {
-    const codeParam = req.params.code;
+    const codeParam = decodeURIComponent(req.params.code);
     const { code, discount } = req.body;
     const index = cupons.findIndex(c => c.code === codeParam);
     
@@ -197,7 +350,7 @@ app.put('/cupons/:code', (req, res) => {
 });
 
 app.delete('/cupons/:code', (req, res) => {
-    const codeParam = req.params.code;
+    const codeParam = decodeURIComponent(req.params.code);
     const index = cupons.findIndex(c => c.code === codeParam);
     
     if (index === -1) return res.status(404).json({ message: 'Cupom não encontrado' });
@@ -231,6 +384,64 @@ app.get('/users', (req, res) => {
     res.json(users);
 });
 
+// Rota de login
+app.post('/login', (req, res) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        return res.status(400).json({ success: false, message: 'Email e senha são obrigatórios' });
+    }
+
+    const found = users.find(u =>
+        u.email === email &&
+        u.password === password
+    );
+
+    if (found) {
+        res.json({ 
+            success: true, 
+            message: 'Login bem-sucedido', 
+            user: {
+                username: found.username,
+                email: found.email,
+                tipo: found.tipo
+            }
+        });
+    } else {
+        res.status(401).json({ success: false, message: 'Email ou senha inválidos' });
+    }
+});
+
+// Rota de cadastro
+app.post('/cadastro', (req, res) => {
+    const { username, email, password, tipo } = req.body;
+    if (!email || !username || !password) {
+        return res.status(400).json({ message: 'Email, usuário e senha são obrigatórios' });
+    }
+
+    if (users.find(u => u.email === email)) {
+        return res.status(400).json({ message: 'E-mail já cadastrado' });
+    }
+
+    const newUser = { 
+        username, 
+        email, 
+        password, 
+        tipo: tipo || 'cliente' 
+    };
+    users.push(newUser);
+    saveDataToCSV();
+    res.status(201).json({ 
+        success: true, 
+        user: { 
+            username: newUser.username, 
+            email: newUser.email, 
+            tipo: newUser.tipo 
+        },
+        message: 'Cadastro realizado com sucesso'
+    });
+});
+
 app.post('/users', (req, res) => {
     const { username, email, password, tipo } = req.body;
     if (!email || !username || !password) {
@@ -253,7 +464,7 @@ app.post('/users', (req, res) => {
 });
 
 app.put('/users/:email', (req, res) => {
-    const emailParam = req.params.email;
+    const emailParam = decodeURIComponent(req.params.email);
     const { username, email, password, tipo } = req.body;
     const index = users.findIndex(u => u.email === emailParam);
     
@@ -271,7 +482,7 @@ app.put('/users/:email', (req, res) => {
 });
 
 app.delete('/users/:email', (req, res) => {
-    const emailParam = req.params.email;
+    const emailParam = decodeURIComponent(req.params.email);
     const index = users.findIndex(u => u.email === emailParam);
     
     if (index === -1) return res.status(404).json({ message: 'Usuário não encontrado' });
@@ -283,4 +494,5 @@ app.delete('/users/:email', (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`Servidor rodando na porta ${PORT}`);
+    console.log(`Acesse: http://localhost:${PORT}`);
 });

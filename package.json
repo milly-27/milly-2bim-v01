@@ -3,7 +3,8 @@
     "cors": "^2.8.5",
     "csv-parser": "^3.2.0",
     "express": "^5.1.0",
-    "fs": "^0.0.1-security"
+    "fs": "^0.0.1-security",
+    "multer": "^2.0.1"
   },
   "name": "admin",
   "version": "1.0.0",

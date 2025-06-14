@@ -10,7 +10,13 @@
 
   <header>
     <h1>Painel Administrativo - Padaria Pink Delfins</h1>
-    <a href="../principal/index.html" class="voltar-button">Voltar à Loja</a>
+    <div class="header-actions">
+      <div id="user-info" style="display: none;">
+        <span id="user-name"></span>
+        <button id="logout-btn" onclick="logout()">Sair</button>
+      </div>
+      <a href="../principal/index.html" class="voltar-button">Voltar à Loja</a>
+    </div>
   </header>
 
   <nav class="tabs">
@@ -120,8 +126,9 @@
           </select>
         </div>
         <div class="form-group">
-          <label for="imagem-produto">URL da Imagem:</label>
-          <input type="text" id="imagem-produto">
+          <label for="imagem-produto">Imagem:</label>
+          <input type="file" id="upload-imagem-produto" accept="image/*" onchange="uploadImagem()">
+          <input type="text" id="imagem-produto" placeholder="URL da imagem será preenchida automaticamente" readonly>
         </div>
         <div class="form-actions">
           <button type="button" onclick="fecharModal('modal-produto')" class="btn-cancelar">Cancelar</button>

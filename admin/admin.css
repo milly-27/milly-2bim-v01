@@ -27,6 +27,66 @@ header h1 {
   font-weight: 600;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Estilos para informações do usuário logado */
+#user-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: linear-gradient(45deg, #ec407a, #f06292);
+  padding: 0.6rem 1.2rem;
+  border-radius: 25px;
+  color: white;
+  box-shadow: 0 4px 15px rgba(236, 64, 122, 0.3);
+  transition: all 0.3s ease;
+}
+
+#user-info:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(236, 64, 122, 0.4);
+}
+
+#user-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+#user-name::before {
+  content: "👤";
+  font-size: 1.1rem;
+}
+
+#logout-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  padding: 0.4rem 0.8rem;
+  border-radius: 15px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+#logout-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: scale(1.05);
+}
+
+#logout-btn:active {
+  transform: scale(0.98);
+}
+
 .voltar-button {
   background: linear-gradient(45deg, #ec407a, #f06292);
   color: white;
@@ -35,6 +95,14 @@ header h1 {
   border-radius: 25px;
   transition: all 0.3s ease;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.voltar-button::before {
+  content: "←";
+  font-size: 1.1rem;
 }
 
 .voltar-button:hover {
@@ -211,6 +279,8 @@ tr:hover {
   border-radius: 15px;
   width: 90%;
   max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   animation: modalSlideIn 0.3s ease-out;
 }
@@ -297,6 +367,16 @@ form {
   color: white;
 }
 
+.btn-salvar, .btn-cancelar {
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
 .btn-salvar:hover, .btn-cancelar:hover {
   transform: translateY(-2px);
   box-shadow: 0 5px 15px rgba(236, 64, 122, 0.3);
@@ -318,8 +398,63 @@ form {
   100% { transform: rotate(360deg); }
 }
 
+/* Estilo para input de pesquisa */
+input[type="text"] {
+  width: 100%;
+  max-width: 400px;
+  padding: 0.75rem 1rem;
+  margin: 1rem 0;
+  font-size: 1rem;
+  border: 2px solid #ec407a;
+  border-radius: 30px;
+  outline: none;
+  background-color: #fff0f4;
+  box-shadow: 0 4px 10px rgba(236, 64, 122, 0.1);
+  transition: all 0.3s ease;
+}
+
+input[type="text"]::placeholder {
+  color: #ec407a;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
+  header {
+    padding: 1rem;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  header h1 {
+    font-size: 1.4rem;
+  }
+
+  .header-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  #user-info {
+    justify-content: center;
+    padding: 0.5rem 1rem;
+  }
+
+  #user-name {
+    font-size: 0.9rem;
+  }
+
+  #logout-btn {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.8rem;
+  }
+
+  .voltar-button {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+    justify-content: center;
+  }
+
   .container {
     padding: 0 0.5rem;
   }
@@ -342,16 +477,6 @@ form {
     padding: 0.8rem;
   }
 
-  header {
-    padding: 1rem;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  header h1 {
-    font-size: 1.4rem;
-  }
-
   .modal-content {
     width: 95%;
     margin: 10% auto;
@@ -368,35 +493,4 @@ form {
   th, td {
     padding: 0.5rem;
   }
-}
-
-/* Estilo para input de pesquisa */
-input[type="text"] {
-  width: 100%;
-  max-width: 400px;
-  padding: 0.75rem 1rem;
-  margin: 1rem 0;
-  font-size: 1rem;
-  border: 2px solid #ec407a;
-  border-radius: 30px;
-  outline: none;
-  background-color: #fff0f4;
-  box-shadow: 0 4px 10px rgba(236, 64, 122, 0.1);
-  transition: all 0.3s ease;
-}
-
-input[type="text"]::placeholder {
-  color: #ec407a;
-}
-.modal-content {
-  background: white;
-  margin: 5% auto;
-  padding: 0;
-  border-radius: 15px;
-  width: 90%;
-  max-width: 500px;
-  max-height: 90vh; /* Limita altura máxima */
-  overflow-y: auto;  /* Adiciona rolagem interna se necessário */
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  animation: modalSlideIn 0.3s ease-out;
 }
